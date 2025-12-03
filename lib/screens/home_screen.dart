@@ -4,7 +4,9 @@ import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final Function(int)? onNavigateToTab;
+
+  const HomeScreen({super.key, this.onNavigateToTab});
 
   @override
   Widget build(BuildContext context) {
@@ -17,24 +19,13 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Section
               _buildWelcomeSection(userName),
-
               const SizedBox(height: 24),
-
-              // Quick Action Cards (Flight & Hotel Search)
               _buildQuickActionCards(context),
-
               const SizedBox(height: 32),
-
-              // Popular Destinations
               _buildPopularDestinations(context),
-
               const SizedBox(height: 32),
-
-              // Recently Viewed
               _buildRecentlyViewed(context),
-
               const SizedBox(height: 24),
             ],
           ),
@@ -43,7 +34,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Welcome section with greeting
+  // welcome banner
   Widget _buildWelcomeSection(String userName) {
     return Container(
       width: double.infinity,
@@ -82,13 +73,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Quick action cards for Flight and Hotel search
+  // flight & hotel search cards
   Widget _buildQuickActionCards(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          // Flight Search Card
           Expanded(
             child: _buildActionCard(
               context: context,
@@ -99,17 +89,10 @@ class HomeScreen extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [AppColors.primaryOrange, AppColors.secondaryOrange],
               ),
-              onTap: () {
-                // Navigate to flights tab
-                // This will be handled by updating the tab index in MainScreen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Navigate to Flights tab')),
-                );
-              },
+              onTap: () => onNavigateToTab?.call(0),
             ),
           ),
           const SizedBox(width: 16),
-          // Hotel Search Card
           Expanded(
             child: _buildActionCard(
               context: context,
@@ -123,12 +106,7 @@ class HomeScreen extends StatelessWidget {
                   AppColors.secondaryOrange.withOpacity(0.8),
                 ],
               ),
-              onTap: () {
-                // Navigate to hotels tab
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Navigate to Hotels tab')),
-                );
-              },
+              onTap: () => onNavigateToTab?.call(1),
             ),
           ),
         ],
@@ -136,7 +114,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Individual action card widget
   Widget _buildActionCard({
     required BuildContext context,
     required String title,
@@ -188,7 +165,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Popular destinations horizontal scroll
+  // popular destinations carousel
   Widget _buildPopularDestinations(BuildContext context) {
     final destinations = [
       {'name': 'Tokyo', 'country': 'Japan', 'image': 'tokyo.jpg'},
@@ -240,7 +217,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Individual destination card
+  // destination card thumbnails
   Widget _buildDestinationCard({
     required BuildContext context,
     required String name,
@@ -249,7 +226,6 @@ class HomeScreen extends StatelessWidget {
   }) {
     return InkWell(
       onTap: () {
-        // Navigate to hotel search with pre-filled destination
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Search hotels in $name')),
         );
@@ -309,9 +285,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Recently viewed section
+  // recently viewed items
   Widget _buildRecentlyViewed(BuildContext context) {
-    // TODO: Replace with actual recent data from a provider/database
     final hasRecentItems = false;
 
     return Padding(
@@ -367,7 +342,6 @@ class HomeScreen extends StatelessWidget {
               ),
             )
           else
-            // TODO: Add actual recent items list here
             const SizedBox.shrink(),
         ],
       ),

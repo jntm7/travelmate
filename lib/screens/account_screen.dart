@@ -12,7 +12,6 @@ class AccountScreen extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
 
-    // Format creation date
     final creationDate = user?.metadata.creationTime;
     final formattedDate = creationDate != null
         ? DateFormat('MMMM dd, yyyy').format(creationDate)
@@ -25,7 +24,7 @@ class AccountScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Profile Section
+            // profile section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -41,7 +40,6 @@ class AccountScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // Profile Icon
                   Container(
                     width: 80,
                     height: 80,
@@ -56,7 +54,6 @@ class AccountScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Email
                   Text(
                     user?.email ?? 'No email',
                     style: const TextStyle(
@@ -66,7 +63,6 @@ class AccountScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Account creation date
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -91,12 +87,10 @@ class AccountScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Account Actions
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  // Change Password
                   _buildActionCard(
                     context: context,
                     icon: Icons.lock_outline,
@@ -107,7 +101,6 @@ class AccountScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  // Logout
                   _buildActionCard(
                     context: context,
                     icon: Icons.logout,
@@ -118,7 +111,6 @@ class AccountScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  // Delete Account
                   _buildActionCard(
                     context: context,
                     icon: Icons.delete_outline,
@@ -138,7 +130,7 @@ class AccountScreen extends StatelessWidget {
     );
   }
 
-  /// Build action card widget
+  // action card
   Widget _buildActionCard({
     required BuildContext context,
     required IconData icon,
@@ -204,11 +196,10 @@ class AccountScreen extends StatelessWidget {
     );
   }
 
-  /// Handle logout
+  // logout handler
   void _handleLogout(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -232,7 +223,7 @@ class AccountScreen extends StatelessWidget {
     }
   }
 
-  /// Show change password dialog
+  // change password dialog
   void _showChangePasswordDialog(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userEmail = authProvider.userEmail ?? '';
@@ -288,7 +279,7 @@ class AccountScreen extends StatelessWidget {
     );
   }
 
-  /// Show delete account dialog
+  // delete account dialog
   void _showDeleteAccountDialog(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userEmail = authProvider.userEmail ?? '';
