@@ -47,7 +47,7 @@ class _MainScreenState extends State<MainScreen> {
           color: AppColors.white,
           boxShadow: [
             BoxShadow(
-              color: AppColors.mediumGrey.withOpacity(0.1),
+              color: AppColors.mediumGrey.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -69,7 +69,7 @@ class _MainScreenState extends State<MainScreen> {
                     width: (MediaQuery.of(context).size.width - 16) / _navItems.length - 16,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryOrange.withOpacity(0.15),
+                      color: AppColors.primaryOrange.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
