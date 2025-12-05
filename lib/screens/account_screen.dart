@@ -33,8 +33,8 @@ class AccountScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primaryOrange.withOpacity(0.1),
-                    AppColors.secondaryOrange.withOpacity(0.05),
+                    AppColors.primaryOrange.withValues(alpha: 0.1),
+                    AppColors.secondaryOrange.withValues(alpha: 0.05),
                   ],
                 ),
               ),
@@ -152,8 +152,8 @@ class AccountScreen extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: isDestructive
-                      ? AppColors.error.withOpacity(0.1)
-                      : AppColors.primaryOrange.withOpacity(0.1),
+                      ? AppColors.error.withValues(alpha: 0.1)
+                      : AppColors.primaryOrange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
