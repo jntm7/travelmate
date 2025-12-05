@@ -3,11 +3,14 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 
+// we use Stateless widget because there's no internal state to manage
+// all the data on the home screen comes from other providers (i.e. AuthProvider) or it is static content
 class HomeScreen extends StatelessWidget {
   final Function(int)? onNavigateToTab;
 
   const HomeScreen({super.key, this.onNavigateToTab});
 
+  // build method
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -44,8 +47,8 @@ class HomeScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryOrange.withOpacity(0.1),
-            AppColors.secondaryOrange.withOpacity(0.05),
+            AppColors.primaryOrange.withValues(alpha: 0.1),
+            AppColors.secondaryOrange.withValues(alpha: 0.05),
           ],
         ),
       ),
@@ -103,7 +106,7 @@ class HomeScreen extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [
                   AppColors.accentOrange,
-                  AppColors.secondaryOrange.withOpacity(0.8),
+                  AppColors.secondaryOrange.withValues(alpha: 0.8),
                 ],
               ),
               onTap: () => onNavigateToTab?.call(1),
@@ -113,7 +116,7 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-
+  // action card widget
   Widget _buildActionCard({
     required BuildContext context,
     required String title,
@@ -131,7 +134,7 @@ class HomeScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryOrange.withOpacity(0.3),
+              color: AppColors.primaryOrange.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -165,7 +168,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // popular destinations carousel
+  // popular destinations carousel (for hotels)
   Widget _buildPopularDestinations(BuildContext context) {
     final destinations = [
       {'name': 'Tokyo', 'country': 'Japan', 'image': 'tokyo.jpg'},
@@ -240,7 +243,7 @@ class HomeScreen extends StatelessWidget {
             image: AssetImage('assets/images/destinations/$image'),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.15),
+              Colors.black.withValues(alpha: 0.15),
               BlendMode.darken,
             ),
           ),
@@ -254,7 +257,7 @@ class HomeScreen extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withOpacity(0.5),
+                Colors.black.withValues(alpha: 0.5),
               ],
             ),
           ),
@@ -308,7 +311,7 @@ class HomeScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.lightGrey.withOpacity(0.3),
+                color: AppColors.lightGrey.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppColors.lightGrey,
@@ -340,9 +343,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            )
-          else
-            const SizedBox.shrink(),
+            ),
         ],
       ),
     );
