@@ -22,7 +22,22 @@ class Airport {
   }
 
   // getters for city and country needed for the hotel screen
-  String get city => municipality;
+  String get city {
+    // Try extracting actual city from airport name:
+    if (name.contains('Airport')) {
+      // Remove "Airport", "International", etc.
+      var cleaned = name
+          .replaceAll(RegExp(r'Airport', caseSensitive: false), '')
+          .replaceAll(RegExp(r'International', caseSensitive: false), '')
+          .trim();
+
+      // First word is usually the city
+      var parts = cleaned.split(' ');
+      if (parts.isNotEmpty) return parts.first;
+    }
+    // Fallback
+    return municipality;
+  }
   String get country => isoCountry;
 
   // format display name
