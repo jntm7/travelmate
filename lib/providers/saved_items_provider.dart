@@ -37,7 +37,7 @@ class SavedItemsProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Error loading saved items: $e');
+      //print('Error loading saved items: $e');
     }
   }
 
@@ -50,7 +50,7 @@ class SavedItemsProvider extends ChangeNotifier {
       );
       await prefs.setString(_savedItemsKey, encoded);
     } catch (e) {
-      print('Error saving items: $e');
+      //print('Error saving items: $e');
     }
   }
 
