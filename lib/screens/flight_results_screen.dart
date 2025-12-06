@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
+import '../models/flight.dart';
+import '../utils/flight_utils.dart';
+import '../services/currency_service.dart';
+import '../config/api_config.dart';
 
 class FlightResultsScreen extends StatefulWidget {
   final String origin;
@@ -9,6 +14,7 @@ class FlightResultsScreen extends StatefulWidget {
   final int passengers;
   final String travelClass;
   final bool isRoundTrip;
+  final List<FlightOffer> flights;
 
   const FlightResultsScreen({
     super.key,
@@ -19,6 +25,7 @@ class FlightResultsScreen extends StatefulWidget {
     required this.passengers,
     required this.travelClass,
     required this.isRoundTrip,
+    required this.flights,
   });
 
   @override
@@ -26,53 +33,51 @@ class FlightResultsScreen extends StatefulWidget {
 }
 
 class _FlightResultsScreenState extends State<FlightResultsScreen> {
-  bool _isLoading = true;
-  List<Map<String, dynamic>> _flights = [];
+  late CurrencyService _currencyService;
+  String _selectedCurrency = 'USD';
+  bool _isLoadingCurrency = true;
+  Map<String, double> _exchangeRates = {};
+  double _conversionRate = 1.0;
 
   @override
   void initState() {
     super.initState();
-    _searchFlights();
+    _currencyService = CurrencyService(apiKey: ApiConfig.fixerApiKey);
+    _loadCurrency();
   }
 
-  // search flights
-  Future<void> _searchFlights() async {
-    setState(() => _isLoading = true);
+  // load saved currency preference and exchange rates
+  Future<void> _loadCurrency() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedCurrency = prefs.getString('preferred_currency') ?? 'USD';
 
-    await Future.delayed(const Duration(seconds: 2));
+    if (savedCurrency != 'USD') {
+      try {
+        final rates = await _currencyService.getExchangeRates();
+        final usdRate = rates['USD'];
+        final targetRate = rates[savedCurrency];
 
-    setState(() {
-      _flights = [
-        {
-          'airline': 'United Airlines',
-          'flightNumber': 'UA 123',
-          'departureTime': '08:00 AM',
-          'arrivalTime': '11:30 AM',
-          'duration': '3h 30m',
-          'stops': 0,
-          'price': 245.00,
-        },
-        {
-          'airline': 'Delta Air Lines',
-          'flightNumber': 'DL 456',
-          'departureTime': '10:15 AM',
-          'arrivalTime': '02:00 PM',
-          'duration': '3h 45m',
-          'stops': 0,
-          'price': 289.00,
-        },
-        {
-          'airline': 'American Airlines',
-          'flightNumber': 'AA 789',
-          'departureTime': '02:30 PM',
-          'arrivalTime': '06:15 PM',
-          'duration': '3h 45m',
-          'stops': 1,
-          'price': 198.00,
-        },
-      ];
-      _isLoading = false;
-    });
+        if (usdRate != null && targetRate != null) {
+          _conversionRate = targetRate / usdRate;
+        }
+      } catch (e) {
+        print('Failed to load exchange rates: $e');
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _selectedCurrency = savedCurrency;
+        _isLoadingCurrency = false;
+      });
+    }
+  }
+
+  // convert price to selected currency (synchronous)
+  String _getConvertedPrice(String usdPrice) {
+    final price = double.tryParse(usdPrice) ?? 0.0;
+    final convertedPrice = price * _conversionRate;
+    return CurrencyService.formatPrice(convertedPrice, _selectedCurrency);
   }
 
   @override
@@ -85,7 +90,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
         children: [
           _buildSearchSummary(),
           Expanded(
-            child: _isLoading ? _buildLoadingState() : _buildResultsList(),
+            child: _buildResultsList(),
           ),
         ],
       ),
@@ -101,7 +106,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
         color: AppColors.white,
         boxShadow: [
           BoxShadow(
-            color: AppColors.mediumGrey.withOpacity(0.1),
+            color: AppColors.mediumGrey.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -114,7 +119,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  '${widget.origin} � ${widget.destination}',
+                  '${widget.origin} → ${widget.destination}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -131,7 +136,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '${_formatDate(widget.departureDate)}${widget.isRoundTrip && widget.returnDate != null ? ' - ${_formatDate(widget.returnDate!)}' : ''} " ${widget.passengers} passenger${widget.passengers > 1 ? 's' : ''} " ${_formatClass(widget.travelClass)}',
+            '${_formatDate(widget.departureDate)}${widget.isRoundTrip && widget.returnDate != null ? ' - ${_formatDate(widget.returnDate!)}' : ''} • ${widget.passengers} passenger${widget.passengers > 1 ? 's' : ''} • ${_formatClass(widget.travelClass)}',
             style: const TextStyle(
               fontSize: 14,
               color: AppColors.mediumGrey,
@@ -142,29 +147,9 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
     );
   }
 
-  // loading state
-  Widget _buildLoadingState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(color: AppColors.primaryOrange),
-          SizedBox(height: 16),
-          Text(
-            'Searching for flights...',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.mediumGrey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // results list
   Widget _buildResultsList() {
-    if (_flights.isEmpty) {
+    if (widget.flights.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -202,28 +187,32 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(14),
-      itemCount: _flights.length,
+      padding: const EdgeInsets.all(16),
+      itemCount: widget.flights.length,
       itemBuilder: (context, index) {
-        final flight = _flights[index];
+        final flight = widget.flights[index];
         return _buildFlightCard(flight);
       },
     );
   }
 
   // flight card
-  Widget _buildFlightCard(Map<String, dynamic> flight) {
+  Widget _buildFlightCard(FlightOffer flight) {
+    final outbound = flight.itineraries.first;
+    final firstSegment = outbound.firstSegment;
+    final lastSegment = outbound.lastSegment;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('View details for ${flight['flightNumber']}')),
+            SnackBar(content: Text('View details for flight ${flight.id}')),
           );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -233,7 +222,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: AppColors.lightGrey.withOpacity(0.3),
+                      color: AppColors.lightGrey.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -248,7 +237,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          flight['airline'],
+                          getAirlineName(firstSegment.carrierCode),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -256,7 +245,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                           ),
                         ),
                         Text(
-                          flight['flightNumber'],
+                          firstSegment.flightNumber,
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.mediumGrey,
@@ -269,16 +258,16 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '\$${flight['price'].toStringAsFixed(2)}',
+                        _getConvertedPrice(flight.price),
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryOrange,
                         ),
                       ),
-                      const Text(
-                        'per person',
-                        style: TextStyle(
+                      Text(
+                        '$_selectedCurrency per person',
+                        style: const TextStyle(
                           fontSize: 10,
                           color: AppColors.mediumGrey,
                         ),
@@ -297,7 +286,15 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          flight['departureTime'],
+                          _formatDateShort(firstSegment.departureTime),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.mediumGrey,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          formatTime(firstSegment.departureTime),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -306,7 +303,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.origin,
+                          firstSegment.departureIataCode,
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.mediumGrey,
@@ -316,10 +313,11 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                     ),
                   ),
                   Expanded(
+                    flex: 2,
                     child: Column(
                       children: [
                         Text(
-                          flight['duration'],
+                          formatDuration(outbound.duration),
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.mediumGrey,
@@ -329,24 +327,25 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              width: 40,
-                              height: 2,
-                              color: AppColors.lightGrey,
+                            Expanded(
+                              child: Container(
+                                height: 2,
+                                color: AppColors.lightGrey,
+                              ),
                             ),
-                            if (flight['stops'] > 0) ...[
+                            if (outbound.numberOfStops > 0) ...[
                               const SizedBox(width: 4),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
+                                  horizontal: 6,
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.warning.withOpacity(0.2),
+                                  color: AppColors.warning.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  '${flight['stops']} stop${flight['stops'] > 1 ? 's' : ''}',
+                                  '${outbound.numberOfStops} stop${outbound.numberOfStops > 1 ? 's' : ''}',
                                   style: const TextStyle(
                                     fontSize: 10,
                                     color: AppColors.warning,
@@ -354,18 +353,19 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 2),
+                              const SizedBox(width: 4),
                             ],
-                            Container(
-                              width: 40,
-                              height: 2,
-                              color: AppColors.lightGrey,
+                            Expanded(
+                              child: Container(
+                                height: 2,
+                                color: AppColors.lightGrey,
+                              ),
                             ),
                           ],
                         ),
-                        if (flight['stops'] == 0)
+                        if (outbound.numberOfStops == 0)
                           const SizedBox(
-                            height: 14,
+                            height: 16,
                             child: Text(
                               'Nonstop',
                               style: TextStyle(
@@ -383,7 +383,15 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          flight['arrivalTime'],
+                          _formatDateShort(lastSegment.arrivalTime),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.mediumGrey,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          formatTime(lastSegment.arrivalTime),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -392,7 +400,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.destination,
+                          lastSegment.arrivalIataCode,
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.mediumGrey,
@@ -412,6 +420,12 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
 
   // date formatter
   String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}';
+  }
+
+  // short date formatter for flight cards
+  String _formatDateShort(DateTime date) {
     final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[date.month - 1]} ${date.day}';
   }
