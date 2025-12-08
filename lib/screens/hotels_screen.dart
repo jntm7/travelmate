@@ -468,10 +468,9 @@ class _HotelsScreenState extends State<HotelsScreen> {
       setState(() => _isSearching = true);
 
       try {
-        // Search hotels using liteAPI
         final hotels = await _hotelService.searchHotels(
           cityName: _selectedCity!.city,
-          countryCode: _selectedCity!.country,
+          countryCode: _selectedCity!.countryCode,
           checkin: _checkinDate!,
           checkout: _checkoutDate!,
           adults: _adults,

@@ -23,25 +23,74 @@ class Airport {
 
   // getters for city and country needed for the hotel screen
   String get city {
-    // Try extracting actual city from airport name:
-    if (name.contains('Airport')) {
-      // Remove "Airport", "International", etc.
-      var cleaned = name
-          .replaceAll(RegExp(r'Airport', caseSensitive: false), '')
-          .replaceAll(RegExp(r'International', caseSensitive: false), '')
-          .trim();
-
-      // First word is usually the city
-      var parts = cleaned.split(' ');
-      if (parts.isNotEmpty) return parts.first;
-    }
-    // Fallback
-    return municipality;
+    return municipality.isNotEmpty ? municipality : name;
   }
-  String get country => isoCountry;
+
+  String get country {
+    return _getCountryName(isoCountry);
+  }
+
+  String get countryCode => isoCountry;
+
+  static String _getCountryName(String code) {
+    const countryMap = {
+      'US': 'United States',
+      'CA': 'Canada',
+      'GB': 'United Kingdom',
+      'FR': 'France',
+      'DE': 'Germany',
+      'IT': 'Italy',
+      'ES': 'Spain',
+      'JP': 'Japan',
+      'CN': 'China',
+      'AU': 'Australia',
+      'BR': 'Brazil',
+      'MX': 'Mexico',
+      'IN': 'India',
+      'RU': 'Russia',
+      'KR': 'South Korea',
+      'NL': 'Netherlands',
+      'CH': 'Switzerland',
+      'SE': 'Sweden',
+      'NO': 'Norway',
+      'DK': 'Denmark',
+      'FI': 'Finland',
+      'PL': 'Poland',
+      'BE': 'Belgium',
+      'AT': 'Austria',
+      'GR': 'Greece',
+      'PT': 'Portugal',
+      'IE': 'Ireland',
+      'NZ': 'New Zealand',
+      'SG': 'Singapore',
+      'HK': 'Hong Kong',
+      'TH': 'Thailand',
+      'MY': 'Malaysia',
+      'ID': 'Indonesia',
+      'PH': 'Philippines',
+      'VN': 'Vietnam',
+      'AE': 'United Arab Emirates',
+      'SA': 'Saudi Arabia',
+      'IL': 'Israel',
+      'TR': 'Turkey',
+      'ZA': 'South Africa',
+      'EG': 'Egypt',
+      'AR': 'Argentina',
+      'CL': 'Chile',
+      'CO': 'Colombia',
+      'PE': 'Peru',
+      'CZ': 'Czech Republic',
+      'HU': 'Hungary',
+      'RO': 'Romania',
+      'UA': 'Ukraine',
+      'IS': 'Iceland',
+      'HR': 'Croatia',
+    };
+    return countryMap[code] ?? code;
+  }
 
   // format display name
-  String get displayName => '$municipality ($iataCode) - $isoCountry';
+  String get displayName => '$municipality ($iataCode) - ${_getCountryName(isoCountry)}';
 
   // search text for filtering airports
   String get searchText =>
