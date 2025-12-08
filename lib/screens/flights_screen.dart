@@ -384,7 +384,7 @@ class _FlightsScreenState extends State<FlightsScreen> {
                                       ),
                                     ),
                                     Text(
-                                      option.isoCountry,
+                                      option.country,
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isDark
