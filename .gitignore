@@ -46,3 +46,6 @@ app.*.map.json
 
 # API Keys
 # lib/config/api_config.dart
+lib/config/api_config.dart
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
